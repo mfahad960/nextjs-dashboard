@@ -17,8 +17,39 @@ type BarChartProps = {
   };
 };
 
+const options = {
+  plugins: {
+    tooltip: {
+      callbacks: {
+        label: function (context: any) {
+          const dataset = context.dataset;
+          const total = dataset.data.reduce((acc: number, value: number) => acc + value, 0);
+          const currentValue = dataset.data[context.dataIndex];
+          const percentage = ((currentValue / total) * 100).toFixed(2); // Calculate percentage
+          return `${context.label}: $${currentValue} (${percentage}%)`;
+        },
+      },
+    },
+    legend: {
+      labels: {
+        generateLabels: function (chart: any) {
+          const data = chart.data;
+          return data.labels.map((label: string, index: number) => {
+            const value = data.datasets[0].data[index];
+            return {
+              text: `${label}`, // Add `%` or `$` here
+              fillStyle: data.datasets[0].backgroundColor[index],
+              hidden: false,
+            };
+          });
+        },
+      },
+    },
+  },
+};
+
 const Chart = ({ data }: BarChartProps) => {
-  return <Pie data={data} />;
+  return <Pie data={data} options={options}/>;
 };
 
 export default Chart;

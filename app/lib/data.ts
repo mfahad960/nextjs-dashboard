@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres';
 import {
   CustomerField,
+  FormattedCustomersTable,
   InvoiceForm,
   InvoicesTable,
   LatestInvoiceRaw,
@@ -158,12 +159,21 @@ export async function fetchInvoiceById(id: string) {
 
 export async function fetchCustomers() {
   try {
-    const data = await sql<CustomerField>`
+    const data = await sql<FormattedCustomersTable>`
       SELECT
-        id,
-        name
+        customers.id,
+        customers.name,
+        customers.email,
+        customers.image_url,
+        COUNT(invoices.id) AS total_invoices,
+        SUM(CASE WHEN invoices.status = 'pending' THEN invoices.amount ELSE 0 END) AS total_pending,
+		    SUM(CASE WHEN invoices.status = 'paid' THEN invoices.amount ELSE 0 END) AS total_paid
+
       FROM customers
-      ORDER BY name ASC
+      LEFT JOIN invoices
+        ON invoices.customer_id = customers.id
+      GROUP BY customers.id
+      ORDER BY customers.name ASC
     `;
 
     const customers = data.rows;
